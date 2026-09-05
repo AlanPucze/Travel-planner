@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мой travel-планер</title>
+<style>
+  :root{
+    --bg: #FBF6F4;
+    --panel: #FFFFFF;
+    --pink: #E38AA9;
+    --pink-deep: #C85F86;
+    --pink-tint: #FBEAF0;
+    --green: #6E9B77;
+    --green-deep: #4A7355;
+    --green-tint: #E9F2EA;
+    --ink: #2E2A2C;
+    --ink-soft: #74696B;
+    --line: #ECDFE1;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(46,42,44,.04), 0 6px 20px rgba(46,42,44,.06);
+    --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  :root[data-theme="dark"]{
+    --bg: #1E1B1D;
+    --panel: #2A2629;
+    --pink: #E38AA9;
+    --pink-deep: #EDA6C0;
+    --pink-tint: #3B2A32;
+    --green: #7FB089;
+    --green-deep: #A8D0AF;
+    --green-tint: #26332B;
+    --ink: #EDE7E9;
+    --ink-soft: #A99EA1;
+    --line: #3D363A;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px;}
+
+  header.hero{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:20px;
+    padding:6px 4px 26px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  header.hero .title-block h1{
+    font-family:var(--serif);
+    font-style:italic;
+    font-weight:400;
+    font-size:42px;
+    margin:0 0 6px;
+    color:var(--green-deep);
+    letter-spacing:.2px;
+  }
+  header.hero .title-block p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    max-width:46ch;
+  }
+  header.hero .badge{
+    background:var(--pink-tint);
+    color:var(--pink-deep);
+    border-radius:999px;
+    padding:7px 16px;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+
+  .toolbar{
+    display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;
+  }
+  .toolbar button{
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:12.5px;
+    font-weight:600;
+    padding:8px 13px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .toolbar button:hover{background:var(--green-tint);border-color:var(--green);}
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:26px;
+    background:var(--panel);
+    padding:6px;
+    border-radius:999px;
+    box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  nav.tabs button{
+    flex:1 1 auto;
+    border:none;
+    background:transparent;
+    padding:11px 14px;
+    border-radius:999px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, color .15s ease;
+  }
+  nav.tabs button.active{
+    background:linear-gradient(135deg, var(--pink), var(--green));
+    color:#fff;
+  }
+
+  section.panel{display:none;}
+  section.panel.active{display:block;}
+
+  .card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px;
+    margin-bottom:18px;
+  }
+  .card h2{
+    font-family:var(--serif);
+    font-style:italic;
+    font-weight:400;
+    font-size:20px;
+    margin:0 0 16px;
+    color:var(--green-deep);
+  }
+  .grid-2{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;}
+  @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} }
+
+  /* Remaining amount */
+  .remaining{
+    text-align:center;
+    padding:10px 0 4px;
+  }
+  .remaining .label{color:var(--ink-soft);font-size:13px;margin-bottom:6px;}
+  .remaining .amount{
+    font-family:var(--serif);
+    font-size:44px;
+    color:var(--pink-deep);
+  }
+  .remaining .amount.neg{color:#B4483F;}
+
+  /* Donut */
+  .donut-row{display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;}
+  .donut{
+    width:150px;height:150px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex:0 0 auto;
+  }
+  .donut::after{
+    content:"";
+    width:82px;height:82px;
+    background:var(--panel);
+    border-radius:50%;
+  }
+  .legend{display:flex;flex-direction:column;gap:7px;font-size:13px;}
+  .legend .row{display:flex;align-items:center;gap:8px;}
+  .legend .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+  .legend .name{color:var(--ink);}
+  .legend .val{color:var(--ink-soft);margin-left:auto;padding-left:10px;}
+
+  /* Spending by day */
+  .daybar-row{
+    display:grid;grid-template-columns:140px 1fr 90px;gap:10px;align-items:center;
+    margin-bottom:9px;font-size:12.5px;
+  }
+  @media (max-width:560px){ .daybar-row{grid-template-columns:96px 1fr 72px;} }
+  .daybar-label{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .daybar-track{background:var(--green-tint);border-radius:6px;height:16px;overflow:hidden;}
+  .daybar-fill{height:100%;background:var(--green);border-radius:6px;min-width:2px;}
+  .daybar-fill.peak{background:var(--pink-deep);}
+  .daybar-val{text-align:right;color:var(--ink-soft);}
+
+  .table-scroll{overflow-x:auto;}
+  #daysContainer td{vertical-align:top;padding-top:9px;}
+  #daysContainer .drag-handle{padding-top:11px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{
+    text-align:left;
+    font-size:12px;
+    text-transform:none;
+    color:var(--ink-soft);
+    font-weight:600;
+    padding:8px 8px;
+    border-bottom:2px solid var(--line);
+  }
+  td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tr:last-child td{border-bottom:none;}
+  tfoot td{font-weight:700;border-top:2px solid var(--line);border-bottom:none;padding-top:10px;}
+  input, select{
+    font-family:var(--sans);
+    font-size:13.5px;
+    border:1px solid transparent;
+    background:transparent;
+    border-radius:8px;
+    padding:6px 7px;
+    color:var(--ink);
+    width:100%;
+  }
+  input:hover, select:hover{background:var(--green-tint);}
+  input:focus, select:focus{
+    outline:none;border-color:var(--green);background:var(--panel);
+  }
+  textarea{
+    font-family:var(--sans);
+    font-size:13.5px;
+    border:1px solid transparent;
+    background:transparent;
+    border-radius:8px;
+    padding:6px 7px;
+    color:var(--ink);
+    width:100%;
+    resize:none;
+    overflow:hidden;
+    min-height:34px;
+    line-height:1.4;
+    display:block;
+  }
+  textarea:hover{background:var(--green-tint);}
+  textarea:focus{outline:none;border-color:var(--green);background:var(--panel);}
+  input.num{text-align:right;}
+  td.dot-cell{width:14px;padding-right:0;}
+  .swatch{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .icon-btn{
+    border:none;background:transparent;color:var(--ink-soft);
+    cursor:pointer;font-size:15px;line-height:1;padding:4px 6px;border-radius:6px;
+  }
+  .icon-btn:hover{background:var(--pink-tint);color:var(--pink-deep);}
+
+  .add-row{
+    margin-top:12px;
+    border:1.5px dashed var(--line);
+    background:transparent;
+    color:var(--green-deep);
+    font-weight:600;
+    font-size:13.5px;
+    padding:9px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    width:100%;
+    text-align:center;
+  }
+  .add-row:hover{background:var(--green-tint);border-color:var(--green);}
+
+  /* converter */
+  .converter{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+  .field{display:flex;flex-direction:column;gap:5px;min-width:90px;}
+  .field label{font-size:11.5px;color:var(--ink-soft);}
+  .field input, .field select{
+    border:1px solid var(--line);
+    padding:9px 10px;
+    border-radius:9px;
+    background:var(--panel);
+  }
+  .converter .result{
+    background:var(--green-tint);
+    border-radius:9px;
+    padding:9px 14px;
+    font-weight:700;
+    color:var(--green-deep);
+    white-space:nowrap;
+  }
+  .converter .swap{
+    color:var(--ink-soft);font-size:12px;padding-bottom:9px;
+  }
+
+  /* packing list */
+  .packing-group{margin-bottom:14px;}
+  .packing-group h3{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--green-deep);
+    margin:0 0 8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .packing-group h3 span.count{
+    font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:0;
+  }
+  .item-row{
+    display:flex;align-items:center;gap:9px;
+    padding:6px 2px;border-bottom:1px solid var(--line);
+  }
+  .item-row:last-child{border-bottom:none;}
+  .item-row input[type=checkbox]{
+    width:17px;height:17px;accent-color:var(--green);flex:0 0 auto;
+  }
+  .item-row input[type=text]{flex:1;}
+  .item-row.checked input[type=text]{
+    text-decoration:line-through;color:var(--ink-soft);
+  }
+
+  /* places */
+  .places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;}
+  .place-card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .place-card .photo{
+    height:130px;
+    background:linear-gradient(135deg,var(--pink-tint),var(--green-tint));
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;color:var(--pink-deep);
+    position:relative;
+    cursor:pointer;
+    overflow:hidden;
+  }
+  .place-card .photo img{
+    width:100%;height:100%;object-fit:cover;display:block;
+  }
+  .place-card .photo .placeholder{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    color:var(--pink-deep);
+  }
+  .place-card .photo .placeholder .icon{font-size:22px;}
+  .place-card .photo .placeholder .txt{font-size:11px;font-weight:600;}
+  .place-card .photo input[type=file]{display:none;}
+  .place-card .photo .remove-photo{
+    position:absolute;top:6px;right:6px;
+    width:22px;height:22px;border-radius:50%;border:none;
+    background:rgba(46,42,44,.55);color:#fff;font-size:12px;
+    line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .place-card .photo .remove-photo:hover{background:rgba(46,42,44,.8);}
+  .place-card .photo .change-hint{
+    position:absolute;bottom:0;left:0;right:0;
+    background:rgba(46,42,44,.5);color:#fff;font-size:10.5px;
+    text-align:center;padding:3px 0;opacity:0;transition:opacity .15s ease;
+  }
+  .place-card .photo:hover .change-hint{opacity:1;}
+  .place-card .body{padding:14px;}
+  .place-card input.name{
+    font-family:var(--serif);font-style:italic;font-size:17px;
+    color:var(--green-deep);padding:0;margin-bottom:8px;
+    border:none;background:transparent;width:100%;
+  }
+  .place-field{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--line);}
+  .place-field:last-of-type{border-bottom:none;}
+  .place-field .k{color:var(--ink-soft);flex:0 0 76px;padding-top:3px;}
+  .place-field input, .place-field select{padding:3px 5px;}
+  .stars{display:flex;gap:1px;padding-top:1px;}
+  .stars .star{
+    cursor:pointer;font-size:15px;line-height:1;color:var(--pink-deep);
+    user-select:none;transition:transform .1s ease;
+  }
+  .stars .star:hover{transform:scale(1.15);}
+  .remove-place{
+    margin-top:10px;width:100%;border:none;background:var(--pink-tint);color:var(--pink-deep);
+    font-size:12.5px;font-weight:600;padding:7px;border-radius:8px;cursor:pointer;
+  }
+  .remove-place:hover{background:#F6D3E0;}
+
+  /* user-defined place categories — free-form folders (city, type, district, whatever) */
+  .place-cat-group{margin-bottom:26px;}
+  .place-cat-group:last-child{margin-bottom:0;}
+  .place-cat-group h3{
+    font-family:var(--serif);font-style:italic;font-weight:400;font-size:17px;
+    color:var(--pink-deep);margin:0 0 12px;padding-bottom:6px;
+    border-bottom:1px dashed var(--line);
+  }
+  .cat-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .cat-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--green-tint);color:var(--green-deep);
+    border-radius:999px;padding:6px 10px 6px 14px;font-size:12.5px;font-weight:600;
+  }
+  .cat-chip button{
+    border:none;background:transparent;color:var(--green-deep);cursor:pointer;
+    font-size:11px;line-height:1;padding:2px;opacity:.7;
+  }
+  .cat-chip button:hover{opacity:1;}
+  .place-cat-toggles{display:flex;flex-wrap:wrap;gap:5px;flex:1;padding-top:1px;}
+  .cat-toggle{
+    border:1px solid var(--line);background:transparent;color:var(--ink-soft);
+    font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;cursor:pointer;
+  }
+  .cat-toggle:hover{border-color:var(--pink);}
+  .cat-toggle.active{
+    background:linear-gradient(135deg,var(--pink),var(--green));color:#fff;border-color:transparent;
+  }
+
+  .daily-day{margin-bottom:18px;}
+  .drag-handle{
+    cursor:grab;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    letter-spacing:-1px;
+    user-select:none;
+  }
+  .drag-handle:active{cursor:grabbing;}
+  #daysContainer tr.dragging{opacity:.35;}
+  #daysContainer tr.drag-over td{border-top:2px solid var(--pink);}
+  .row-actions{display:flex;gap:1px;justify-content:flex-end;}
+  .row-actions .icon-btn{padding:4px 5px;font-size:13px;}
+  .daily-day .day-head{
+    display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;
+  }
+  .daily-day .day-head input.day-title{
+    font-family:var(--serif);font-style:italic;font-size:16.5px;color:var(--pink-deep);
+    border:none;background:transparent;padding:2px 4px;flex:0 0 auto;width:auto;min-width:70px;
+  }
+  .daily-day .day-head input.day-date{
+    max-width:150px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+  }
+  .daily-day .day-tools{margin-left:auto;display:flex;gap:1px;}
+  .save-note{
+    text-align:center;color:var(--ink-soft);font-size:12px;margin-top:6px;min-height:16px;
+  }
+  .empty{color:var(--ink-soft);font-size:13px;text-align:center;padding:14px 0;}
+
+  /* trip cover */
+  .cover{
+    position:relative;border-radius:var(--radius);overflow:hidden;
+    margin-bottom:22px;box-shadow:var(--shadow);min-height:210px;display:flex;
+  }
+  .cover-bg{position:absolute;inset:0;z-index:0;background-position:center;background-size:cover;}
+  .cover-inner{
+    position:relative;z-index:1;width:100%;padding:20px 22px;
+    display:flex;flex-direction:column;gap:9px;color:#fff;
+    background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.50));
+  }
+  .cover-name{
+    font-family:var(--serif);font-style:italic;font-size:30px;color:#fff;
+    border:none;background:transparent;padding:2px 4px;width:100%;
+    text-shadow:0 1px 8px rgba(0,0,0,.45);
+  }
+  .cover-name::placeholder{color:rgba(255,255,255,.72);}
+  .cover-dates{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;}
+  .cover-dates label{display:flex;align-items:center;gap:6px;text-shadow:0 1px 5px rgba(0,0,0,.5);}
+  .cover-dates input{
+    width:auto;border:1px solid rgba(255,255,255,.55);border-radius:8px;
+    background:rgba(255,255,255,.16);color:#fff;padding:5px 8px;
+  }
+  .cover-dates input:hover{background:rgba(255,255,255,.28);}
+  .cover-countdown{
+    margin-top:auto;font-size:15.5px;font-weight:700;
+    text-shadow:0 1px 6px rgba(0,0,0,.5);
+  }
+  .cover-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;}
+  .cover-tools button{
+    border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);
+    color:#fff;font-family:var(--sans);font-size:12px;font-weight:600;
+    padding:6px 11px;border-radius:999px;cursor:pointer;
+  }
+  .cover-tools button:hover{background:rgba(255,255,255,.32);}
+  .cover-tools label{display:flex;align-items:center;gap:6px;text-shadow:0 1px 5px rgba(0,0,0,.5);}
+  .cover-tools input[type=color]{
+    width:32px;height:28px;padding:0;border:1px solid rgba(255,255,255,.55);
+    border-radius:7px;background:transparent;cursor:pointer;
+  }
+
+  /* plan vs fact bars */
+  .pf-row{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center;margin-bottom:13px;font-size:12.5px;}
+  @media (max-width:560px){ .pf-row{grid-template-columns:88px 1fr;} }
+  .pf-label{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pf-bars{display:flex;flex-direction:column;gap:5px;}
+  .pf-bar{display:flex;align-items:center;gap:8px;}
+  .pf-bar b{font-weight:600;flex:0 0 34px;color:var(--ink-soft);font-size:11px;}
+  .pf-track{flex:1;background:var(--green-tint);border-radius:5px;height:13px;overflow:hidden;}
+  .pf-fill{display:block;height:100%;border-radius:5px;min-width:2px;}
+  .pf-fill.plan{background:var(--ink-soft);opacity:.5;}
+  .pf-fill.fact{background:var(--green);}
+  .pf-fill.fact.over{background:#B4483F;}
+  .pf-bar em{font-style:normal;color:var(--ink-soft);flex:0 0 92px;text-align:right;}
+  .pf-bar em.over{color:#B4483F;font-weight:700;}
+
+  /* over-budget category row */
+  #categoryBodyBefore tr.over-budget td, #categoryBodyDuring tr.over-budget td{background:rgba(180,72,63,.09);}
+  #categoryBodyBefore tr.over-budget input[data-field="name"], #categoryBodyDuring tr.over-budget input[data-field="name"]{color:#B4483F;font-weight:700;}
+
+  /* time clash in a day */
+  #daysContainer tr.time-clash input[type=time]{
+    border-color:#B4483F;background:rgba(180,72,63,.14);color:#B4483F;font-weight:700;
+  }
+  .clash-warn{color:#B4483F;font-size:12px;font-weight:600;margin:0 0 8px;}
+  .map-link{text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="cover" id="coverEl">
+    <div class="cover-bg" id="coverBg"></div>
+    <div class="cover-inner">
+      <input id="tripName" class="cover-name" placeholder="Название поездки" maxlength="80">
+      <div class="cover-dates">
+        <label>с <input type="date" id="tripStart"></label>
+        <label>по <input type="date" id="tripEnd"></label>
+      </div>
+      <div class="cover-countdown" id="tripCountdown"></div>
+      <div class="cover-tools">
+        <button type="button" id="coverPhotoBtn">🖼 Фон: фото</button>
+        <button type="button" id="coverPhotoRemove" hidden>Убрать фото</button>
+        <label>Цвет фона <input type="color" id="coverColor" value="#E38AA9"></label>
+        <input type="file" id="coverPhotoInput" accept="image/*" hidden>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="title-block">
+      <h1>Travel-планер</h1>
+      <p>Бюджет, план по дням, список вещей и места — всё в одном месте, для ваших поездок.</p>
+    </div>
+    <div class="badge">Автосохранение включено</div>
+  </header>
+
+  <div class="toolbar">
+    <button id="themeToggleBtn" type="button">🌙 Тёмная тема</button>
+    <button id="exportBtn" type="button">⬇ Экспорт в файл</button>
+    <button id="importBtn" type="button">⬆ Импорт</button>
+    <button id="shareBtn" type="button">🔗 Поделиться ссылкой</button>
+    <input type="file" id="importInput" accept="application/json,.json" hidden>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="budget">Бюджет</button>
+    <button class="tab-btn" data-tab="expenses">Расходы</button>
+    <button class="tab-btn" data-tab="daily">План по дням</button>
+    <button class="tab-btn" data-tab="packing">Список вещей</button>
+    <button class="tab-btn" data-tab="places">Места</button>
+  </nav>
+
+  <!-- BUDGET -->
+  <section class="panel active" id="panel-budget">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Бюджет</h2>
+        <div class="remaining">
+          <div class="label">Бюджет на человека</div>
+          <div class="amount" id="perPersonAmount">0</div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+          <div class="field" style="max-width:150px;">
+            <label for="totalBudgetInput">Общий бюджет</label>
+            <input id="totalBudgetInput" type="number" step="1" value="0">
+          </div>
+          <div class="field" style="max-width:110px;">
+            <label for="peopleCountInput">Человек</label>
+            <input id="peopleCountInput" type="number" step="1" min="1" value="1">
+          </div>
+        </div>
+        <div style="text-align:center;color:var(--ink-soft);font-size:12px;margin-top:12px;">
+          Остаток бюджета: <span id="remainingAmount" style="font-weight:600;">0</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Распределение расходов</h2>
+        <div class="donut-row">
+          <div class="donut" id="donutEl"></div>
+          <div class="legend" id="legendEl"></div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:4px;">
+      Категории по план/факту и траты по дням — на вкладке «Расходы».
+    </p>
+  </section>
+
+  <!-- EXPENSES -->
+  <section class="panel" id="panel-expenses">
+    <div class="card">
+      <h2>Траты по дням</h2>
+      <div id="daySpendingEl"></div>
+    </div>
+
+    <div class="card">
+      <h2>Итого за поездку</h2>
+      <div style="display:flex;gap:26px;flex-wrap:wrap;justify-content:center;text-align:center;">
+        <div>
+          <div style="color:var(--ink-soft);font-size:12px;">План</div>
+          <div id="grandTotalPlanned" style="font-weight:700;font-size:19px;">0</div>
+        </div>
+        <div>
+          <div style="color:var(--ink-soft);font-size:12px;">Факт</div>
+          <div id="grandTotalActual" style="font-weight:700;font-size:19px;">0</div>
+        </div>
+        <div>
+          <div style="color:var(--ink-soft);font-size:12px;">Остаток</div>
+          <div id="grandTotalRemaining" style="font-weight:700;font-size:19px;">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>До поездки <span class="cat-chip" id="phaseCountBefore" style="font-size:11px;padding:3px 10px;vertical-align:middle;"></span></h2>
+      <div id="planFactBeforeEl"></div>
+      <div class="table-scroll" style="margin-top:14px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:14px;"></th>
+            <th>Категория</th>
+            <th style="width:100px;">План</th>
+            <th style="width:100px;">Факт</th>
+            <th style="width:100px;">Остаток</th>
+            <th style="width:56px;"></th>
+          </tr>
+        </thead>
+        <tbody id="categoryBodyBefore"></tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td>Итого</td>
+            <td id="totalPlannedBefore">0</td>
+            <td id="totalActualBefore">0</td>
+            <td id="totalRemainingBefore">0</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      </div>
+      <button class="add-row" id="addCategoryBeforeBtn">+ Добавить категорию</button>
+    </div>
+
+    <div class="card">
+      <h2>Во время поездки <span class="cat-chip" id="phaseCountDuring" style="font-size:11px;padding:3px 10px;vertical-align:middle;"></span></h2>
+      <div id="planFactDuringEl"></div>
+      <div class="table-scroll" style="margin-top:14px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:14px;"></th>
+            <th>Категория</th>
+            <th style="width:100px;">План</th>
+            <th style="width:100px;">Факт</th>
+            <th style="width:100px;">Остаток</th>
+            <th style="width:56px;"></th>
+          </tr>
+        </thead>
+        <tbody id="categoryBodyDuring"></tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td>Итого</td>
+            <td id="totalPlannedDuring">0</td>
+            <td id="totalActualDuring">0</td>
+            <td id="totalRemainingDuring">0</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      </div>
+      <button class="add-row" id="addCategoryDuringBtn">+ Добавить категорию</button>
+    </div>
+  </section>
+
+  <!-- DAILY PLAN -->
+  <section class="panel" id="panel-daily">
+    <div class="card">
+      <h2>План по дням</h2>
+      <div id="daysContainer"></div>
+      <button class="add-row" id="addDayBtn">+ Добавить день</button>
+      <button class="add-row" id="pdfAllDaysBtn" style="margin-top:8px;">🖨 PDF всех дней (для печати)</button>
+    </div>
+  </section>
+
+  <!-- PACKING -->
+  <section class="panel" id="panel-packing">
+    <div class="card">
+      <h2>Список вещей</h2>
+      <div id="packingContainer"></div>
+      <div class="converter" style="margin-top:6px;">
+        <div class="field" style="flex:1;min-width:140px;">
+          <label>Новая категория</label>
+          <input id="newPackGroup" type="text" placeholder="например, Электроника">
+        </div>
+        <button class="add-row" style="width:auto;margin-top:0;" id="addPackGroupBtn">+ Добавить категорию</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLACES -->
+  <section class="panel" id="panel-places">
+    <div class="card">
+      <h2>Категории мест</h2>
+      <p style="margin:0 0 12px;color:var(--ink-soft);font-size:12.5px;">
+        Создавайте любые категории — города (Сеул, Пусан), районы, типы мест (еда, шопинг) — и назначайте
+        каждому месту одну или несколько.
+      </p>
+      <div id="placeCategoryChips" class="cat-chip-row"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <input type="text" id="newPlaceCategoryInput" placeholder="например, Сеул" style="flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--panel);color:var(--ink);">
+        <button class="add-row" id="addPlaceCategoryBtn" style="width:auto;margin-top:0;padding:9px 16px;">+ Добавить категорию</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Места и достопримечательности</h2>
+      <div id="placesGrid"></div>
+      <button class="add-row" id="addPlaceBtn">+ Добавить место</button>
+    </div>
+  </section>
+
+  <datalist id="catList"></datalist>
+
+  <div class="save-note" id="saveNote"></div>
+</div>
+
+<script>
+(function(){
+  const PALETTE = ['#E38AA9','#6E9B77','#D9B4C4','#8FB89A','#C85F86','#4A7355','#F0C9DA','#B7D3BC'];
+  const STORAGE_KEY = 'travel-planner-state-v1';
+  // Preset place categories. '' means "no category chosen".
+  const CATEGORIES = ['', 'Еда', 'Шопинг', 'Отель', 'Достопримечательность', 'Развлечения', 'Транспорт', 'Пляж', 'Музей', 'Природа', 'Другое'];
+
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+
+  /* ---- date + misc helpers ---- */
+  function parseISO(s){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(s || '')) return null;
+    const d = new Date(s + 'T00:00:00');
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function toISO(d){
+    const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return z.toISOString().slice(0, 10);
+  }
+  function pluralRu(n, one, few, many){
+    const a = Math.abs(n) % 100, b = a % 10;
+    if(a > 10 && a < 20) return many;
+    if(b > 1 && b < 5) return few;
+    if(b === 1) return one;
+    return many;
+  }
+  function timeToMin(t){
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t || '');
+    return m ? (parseInt(m[1], 10) * 60 + parseInt(m[2], 10)) : null;
+  }
+  // Naver Map search link built from a free-text query (name + location).
+  function mapUrl(query){
+    return 'https://map.naver.com/p/search/' + encodeURIComponent(String(query || '').trim());
+  }
+  function openInMaps(query){
+    const q = String(query || '').trim();
+    if(!q){ alert('Сначала укажите название или локацию.'); return; }
+    window.open(mapUrl(q), '_blank', 'noopener');
+  }
+
+  // Fills empty day dates: if a day has a date, every following day without one
+  // gets the previous day's date + 1. Manually set dates are never overwritten.
+  function cascadeDayDates(){
+    let prev = null;
+    state.days.forEach(d=>{
+      let cur = parseISO(d.date);
+      if(!cur && prev){
+        cur = new Date(prev); cur.setDate(cur.getDate() + 1);
+        d.date = toISO(cur);
+      }
+      if(cur){ prev = cur; }
+      else if(prev){ prev = new Date(prev); prev.setDate(prev.getDate() + 1); }
+    });
+  }
+
+  // Storage wrapper: uses the host storage API when present, otherwise localStorage,
+  // so the file also works when opened directly from disk.
+  const Store = {
+    async get(key){
+      if(window.storage && window.storage.get){ return window.storage.get(key, false); }
+      const v = localStorage.getItem(key);
+      return v == null ? null : { value: v };
+    },
+    async set(key, value){
+      if(window.storage && window.storage.set){ return window.storage.set(key, value, false); }
+      localStorage.setItem(key, value);
+    }
+  };
+
+  function defaultState(){
+    const catAttractions = { id: uid(), name: 'Достопримечательности' };
+    const catFood = { id: uid(), name: 'Еда' };
+    return {
+      dark: false,
+      trip: { name: 'Моя поездка', startDate: '', endDate: '', coverColor: '#E38AA9', coverPhoto: '' },
+      totalBudget: 2000,
+      peopleCount: 1,
+      categories: [
+        { id: uid(), name: 'Перелёты', planned: 800, actual: 750, phase: 'before' },
+        { id: uid(), name: 'Проживание', planned: 600, actual: 600, phase: 'before' },
+        { id: uid(), name: 'Еда', planned: 300, actual: 210, phase: 'during' },
+        { id: uid(), name: 'Транспорт', planned: 150, actual: 90, phase: 'during' },
+        { id: uid(), name: 'Развлечения', planned: 150, actual: 60, phase: 'during' }
+      ],
+      days: [
+        { id: uid(), title: 'День 1', date: '', items: [
+          { id: uid(), time: '09:00', activity: 'Прилёт и заселение', category: 'Отель', cost: '', notes: '' },
+          { id: uid(), time: '13:00', activity: 'Обед в центре города', category: 'Еда', cost: '', notes: '' }
+        ]}
+      ],
+      packing: [
+        { id: uid(), group: 'Документы', items: [
+          { id: uid(), name: 'Паспорт', checked: false },
+          { id: uid(), name: 'Билеты', checked: false }
+        ]},
+        { id: uid(), group: 'Одежда', items: [
+          { id: uid(), name: 'Футболки', checked: false },
+          { id: uid(), name: 'Куртка', checked: false }
+        ]}
+      ],
+      // User-defined "folders" for places — can be cities, districts, types, anything.
+      placeCategories: [catAttractions, catFood],
+      places: [
+        { id: uid(), name: 'Санторини', categoryIds: [catAttractions.id], location: 'Греция', hoursFrom: '', hoursTo: '', cost: '', link: '', mapLink: '', rating: 5, remark: 'Белые дома и закаты', photos: [] }
+      ]
+    };
+  }
+
+  // Finds a place-category by name, creating it if needed. Used by migration
+  // to turn an old single "category"/"zone" string into a proper folder.
+  function getOrCreatePlaceCategoryId(s, name){
+    name = (name || '').trim();
+    if(!name) return null;
+    if(!Array.isArray(s.placeCategories)) s.placeCategories = [];
+    let cat = s.placeCategories.find(c => c.name === name);
+    if(!cat){ cat = { id: uid(), name }; s.placeCategories.push(cat); }
+    return cat.id;
+  }
+
+  // Brings any older / imported / shared state up to the current shape.
+  function migrateState(s){
+    if(!s || typeof s !== 'object') return defaultState();
+    if(typeof s.dark !== 'boolean') s.dark = false;
+    if(!s.trip || typeof s.trip !== 'object') s.trip = {};
+    if(typeof s.trip.name !== 'string') s.trip.name = 'Моя поездка';
+    if(typeof s.trip.startDate !== 'string') s.trip.startDate = '';
+    if(typeof s.trip.endDate !== 'string') s.trip.endDate = '';
+    if(typeof s.trip.coverColor !== 'string') s.trip.coverColor = '#E38AA9';
+    if(typeof s.trip.coverPhoto !== 'string') s.trip.coverPhoto = '';
+    if(typeof s.peopleCount !== 'number' || s.peopleCount < 1) s.peopleCount = 1;
+    if(!Array.isArray(s.categories)) s.categories = [];
+    s.categories.forEach(c=>{
+      if(c.phase !== 'before' && c.phase !== 'during') c.phase = 'during';
+    });
+    if(!Array.isArray(s.days)) s.days = [];
+    if(!Array.isArray(s.packing)) s.packing = [];
+    if(!Array.isArray(s.places)) s.places = [];
+    if(!Array.isArray(s.placeCategories)) s.placeCategories = [];
+    s.days.forEach(d=>{
+      if(!Array.isArray(d.items)) d.items = [];
+      d.items.forEach(it=>{
+        if(it.category === undefined) it.category = '';
+        if(it.cost === undefined) it.cost = '';
+        if(it.notes === undefined) it.notes = '';
+        if(it.mapLink === undefined) it.mapLink = '';
+      });
+    });
+    s.places.forEach(p=>{
+      if(!Array.isArray(p.categoryIds)){
+        // migrate the old single "category" preset + free-text "zone" into folders
+        const ids = [];
+        const fromCat = getOrCreatePlaceCategoryId(s, p.category);
+        const fromZone = getOrCreatePlaceCategoryId(s, p.zone);
+        if(fromCat) ids.push(fromCat);
+        if(fromZone) ids.push(fromZone);
+        p.categoryIds = ids;
+      }
+      delete p.category;
+      delete p.zone;
+      if(p.hoursFrom === undefined || p.hoursTo === undefined){
+        // try to salvage a couple of HH:MM times from an old free-text "hours" field
+        let hf = '', ht = '';
+        if(typeof p.hours === 'string' && p.hours){
+          const m = p.hours.match(/\d{1,2}:\d{2}/g);
+          if(m && m.length >= 1) hf = m[0];
+          if(m && m.length >= 2) ht = m[1];
+        }
+        if(p.hoursFrom === undefined) p.hoursFrom = hf;
+        if(p.hoursTo === undefined) p.hoursTo = ht;
+      }
+      delete p.hours;
+      if(typeof p.mapLink !== 'string') p.mapLink = '';
+      if(p.photos === undefined){
+        p.photos = p.photo ? [p.photo] : [];
+      }
+      if(!Array.isArray(p.photos)) p.photos = [];
+      // only one photo is kept per place
+      if(p.photos.length > 1) p.photos = p.photos.slice(0, 1);
+      delete p.photo;
+    });
+    return s;
+  }
+
+  let state = defaultState();
+  let saveTimer = null;
+
+  function scheduleSave(){
+    const note = document.getElementById('saveNote');
+    note.textContent = 'Сохранение…';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try{
+        await Store.set(STORAGE_KEY, JSON.stringify(state));
+        note.textContent = 'Сохранено';
+        setTimeout(()=>{ if(note.textContent==='Сохранено') note.textContent=''; }, 1500);
+      }catch(e){
+        note.textContent = 'Не удалось сохранить (данные останутся до конца сессии)';
+      }
+    }, 350);
+  }
+
+  async function loadState(){
+    // A shared link takes priority — it carries a plan snapshot.
+    if(await loadFromShareHash()){
+      cascadeDayDates();
+      applyTheme();
+      renderAll();
+      scheduleSave();
+      return;
+    }
+    try{
+      const res = await Store.get(STORAGE_KEY);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        if(parsed && typeof parsed === 'object'){ state = migrateState(parsed); }
+      }
+    }catch(e){ /* no saved state yet — use defaults */ }
+    cascadeDayDates();
+    applyTheme();
+    renderAll();
+  }
+
+  function renderAll(){
+    renderCategoryDatalist();
+    renderCover();
+    renderBudget();
+    renderDays();
+    renderPacking();
+    renderPlaces();
+  }
+
+  function renderCategoryDatalist(){
+    document.getElementById('catList').innerHTML =
+      CATEGORIES.filter(Boolean).map(c=>`<option value="${escapeAttr(c)}">`).join('');
+  }
+
+  /* ---------- THEME ---------- */
+  function applyTheme(){
+    document.documentElement.dataset.theme = state.dark ? 'dark' : '';
+    const btn = document.getElementById('themeToggleBtn');
+    btn.textContent = state.dark ? '☀ Светлая тема' : '🌙 Тёмная тема';
+  }
+  document.getElementById('themeToggleBtn').addEventListener('click', ()=>{
+    state.dark = !state.dark;
+    applyTheme();
+    scheduleSave();
+  });
+
+  /* ---------- TRIP COVER + COUNTDOWN ---------- */
+  const tripName = document.getElementById('tripName');
+  const tripStart = document.getElementById('tripStart');
+  const tripEnd = document.getElementById('tripEnd');
+  const coverColor = document.getElementById('coverColor');
+  const coverPhotoInput = document.getElementById('coverPhotoInput');
+
+  function countdownText(){
+    const start = parseISO(state.trip.startDate);
+    if(!start) return 'Укажите даты поездки, чтобы включить обратный отсчёт';
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.round((start - today) / 86400000);
+    if(diff > 0) return `Осталось ${diff} ${pluralRu(diff, 'день', 'дня', 'дней')} до поездки`;
+    if(diff === 0) return 'Поездка начинается сегодня! 🎒';
+    const end = parseISO(state.trip.endDate) || start;
+    if(today <= end) return 'Поездка идёт прямо сейчас ✈️';
+    const ago = -Math.round((end - today) / 86400000);
+    return `Поездка завершилась ${ago} ${pluralRu(ago, 'день', 'дня', 'дней')} назад`;
+  }
+
+  function renderCover(){
+    const t = state.trip;
+    if(document.activeElement !== tripName) tripName.value = t.name || '';
+    if(document.activeElement !== tripStart) tripStart.value = t.startDate || '';
+    if(document.activeElement !== tripEnd) tripEnd.value = t.endDate || '';
+    const color = /^#[0-9a-fA-F]{6}$/.test(t.coverColor) ? t.coverColor : '#E38AA9';
+    coverColor.value = color;
+    const bg = document.getElementById('coverBg');
+    bg.style.background = t.coverPhoto
+      ? `url("${t.coverPhoto}") center / cover no-repeat`
+      : `linear-gradient(135deg, ${color}, var(--green))`;
+    document.getElementById('coverPhotoRemove').hidden = !t.coverPhoto;
+    document.getElementById('tripCountdown').textContent = countdownText();
+  }
+
+  tripName.addEventListener('input', ()=>{ state.trip.name = tripName.value; scheduleSave(); });
+  tripStart.addEventListener('change', ()=>{ state.trip.startDate = tripStart.value; renderCover(); scheduleSave(); });
+  tripEnd.addEventListener('change', ()=>{ state.trip.endDate = tripEnd.value; renderCover(); scheduleSave(); });
+  coverColor.addEventListener('input', ()=>{ state.trip.coverColor = coverColor.value; renderCover(); scheduleSave(); });
+  document.getElementById('coverPhotoBtn').addEventListener('click', ()=> coverPhotoInput.click());
+  document.getElementById('coverPhotoRemove').addEventListener('click', ()=>{
+    state.trip.coverPhoto = ''; renderCover(); scheduleSave();
+  });
+  coverPhotoInput.addEventListener('change', async ()=>{
+    const file = coverPhotoInput.files && coverPhotoInput.files[0];
+    coverPhotoInput.value = '';
+    if(!file) return;
+    if(!file.type.startsWith('image/')){ alert('Выберите файл изображения.'); return; }
+    try{
+      state.trip.coverPhoto = await resizeImageToDataUrl(file, 1400, 0.75);
+      renderCover();
+      scheduleSave();
+    }catch(e){ alert('Не удалось загрузить фото обложки.'); }
+  });
+
+  // Keeps the countdown fresh if the page stays open across midnight.
+  setInterval(()=>{ document.getElementById('tripCountdown').textContent = countdownText(); }, 60000);
+
+  /* ---------- EXPORT / IMPORT / SHARE ---------- */
+  function downloadJSON(filename, obj){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 100);
+  }
+
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    downloadJSON('travel-planner.json', { type: 'travel-planner-full', version: 1, exportedAt: new Date().toISOString(), state });
+  });
+
+  const importInput = document.getElementById('importInput');
+  document.getElementById('importBtn').addEventListener('click', ()=> importInput.click());
+  importInput.addEventListener('change', ()=>{
+    const file = importInput.files && importInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const obj = JSON.parse(reader.result);
+        if(obj && obj.type === 'travel-planner-day' && obj.day){
+          const day = JSON.parse(JSON.stringify(obj.day));
+          day.id = uid();
+          (day.items || []).forEach(it=> it.id = uid());
+          state.days.push(day);
+          migrateState(state);
+          renderAll();
+          scheduleSave();
+          alert('День «' + (day.title || 'без названия') + '» добавлен в план.');
+        } else if(obj && (obj.type === 'travel-planner-full' || obj.state) && obj.state){
+          if(confirm('Заменить ВСЕ текущие данные импортированными?')){
+            state = migrateState(obj.state);
+            applyTheme();
+            renderAll();
+            scheduleSave();
+          }
+        } else {
+          alert('Не похоже на файл travel-планера.');
+        }
+      }catch(e){
+        alert('Не удалось прочитать файл: ' + e.message);
+      }
+      importInput.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  // Legacy (pre-compression) link format — kept only so old shared links still open.
+  function encodeState(obj){
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  }
+  function decodeState(str){
+    return JSON.parse(decodeURIComponent(escape(atob(str))));
+  }
+
+  /* ---- compact snapshot: arrays instead of keyed objects, no photos ----
+     This is what actually keeps the link short — repeating field names for
+     every category/day/item/place is the biggest part of a plain JSON dump. */
+  function buildShareSnapshot(){
+    return {
+      t: [state.trip.name || '', state.trip.startDate || '', state.trip.endDate || '', state.trip.coverColor || '#E38AA9'],
+      b: state.totalBudget,
+      pc: state.peopleCount || 1,
+      c: state.categories.map(c => [c.name, c.planned, c.actual, c.phase || 'during']),
+      d: state.days.map(d => [
+        d.title, d.date,
+        (d.items||[]).map(it => [it.time, it.activity, it.category||'', it.cost||'', it.notes||'', it.mapLink||''])
+      ]),
+      k: state.packing.map(g => [g.group, (g.items||[]).map(it => [it.name, it.checked ? 1 : 0])]),
+      pcats: state.placeCategories.map(c => c.name), // preserves categories even if currently empty
+      pl: state.places.map(p => [
+        p.name,
+        (p.categoryIds||[]).map(id => { const c = state.placeCategories.find(x=>x.id===id); return c ? c.name : ''; }).filter(Boolean),
+        p.location||'', p.hoursFrom||'', p.hoursTo||'', p.cost||'', p.link||'', p.mapLink||'', p.rating||0, p.remark||''
+      ])
+    };
+  }
+
+  function snapshotToState(snap){
+    const s = defaultState();
+    if(Array.isArray(snap.t)){
+      s.trip = { name: snap.t[0] || 'Моя поездка', startDate: snap.t[1] || '', endDate: snap.t[2] || '', coverColor: snap.t[3] || '#E38AA9', coverPhoto: '' };
+    }
+    s.totalBudget = snap.b || 0;
+    s.peopleCount = snap.pc || 1;
+    s.categories = (snap.c||[]).map(([name,planned,actual,phase]) => ({ id: uid(), name, planned, actual, phase: phase || 'during' }));
+    s.days = (snap.d||[]).map(([title,date,items]) => ({
+      id: uid(), title, date,
+      items: (items||[]).map(([time,activity,category,cost,notes,mapLink]) => ({ id: uid(), time, activity, category, cost, notes, mapLink: mapLink||'' }))
+    }));
+    s.packing = (snap.k||[]).map(([group,items]) => ({
+      id: uid(), group,
+      items: (items||[]).map(([name,checked]) => ({ id: uid(), name, checked: !!checked }))
+    }));
+    const nameToId = {};
+    s.placeCategories = (snap.pcats||[]).map(name => {
+      const c = { id: uid(), name };
+      nameToId[name] = c.id;
+      return c;
+    });
+    s.places = (snap.pl||[]).map(([name,catNames,location,hoursFrom,hoursTo,cost,link,mapLink,rating,remark]) => {
+      const categoryIds = (catNames||[]).map(n=>{
+        if(nameToId[n]) return nameToId[n];
+        const c = { id: uid(), name: n };
+        s.placeCategories.push(c);
+        nameToId[n] = c.id;
+        return c.id;
+      });
+      return { id: uid(), name, categoryIds, location, hoursFrom, hoursTo, cost, link, mapLink: mapLink||'', rating, remark, photos: [] };
+    });
+
+    return s;
+  }
+
+  // base64url helpers (URL-safe: no +, /, or = padding)
+  function strToBase64Url(str){
+    return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function base64UrlToStr(b64url){
+    let b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length % 4) b64 += '=';
+    return decodeURIComponent(escape(atob(b64)));
+  }
+  function arrayBufferToBase64Url(buf){
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    for(let i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function base64UrlToArrayBuffer(b64url){
+    let b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length % 4) b64 += '=';
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  // Compresses with the browser's native gzip (no external library, works
+  // offline) when available; otherwise falls back to plain base64 — still
+  // much shorter than before since photos are gone and keys aren't repeated.
+  async function compressToPayload(text){
+    if(typeof CompressionStream === 'function'){
+      try{
+        const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+        const buf = await new Response(stream).arrayBuffer();
+        return 'z' + arrayBufferToBase64Url(buf);
+      }catch(e){ /* fall through */ }
+    }
+    return 'p' + strToBase64Url(text);
+  }
+  async function decompressFromPayload(payload){
+    const kind = payload[0];
+    const body = payload.slice(1);
+    if(kind === 'z'){
+      const buf = base64UrlToArrayBuffer(body);
+      const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+      return new Response(stream).text();
+    }
+    return base64UrlToStr(body);
+  }
+
+  async function buildShareUrl(){
+    const json = JSON.stringify(buildShareSnapshot());
+    const payload = await compressToPayload(json);
+    return location.origin + location.pathname + '#s=' + payload;
+  }
+
+  async function loadFromShareHash(){
+    const hash = location.hash;
+
+    let m = hash.match(/^#s=(.+)$/);
+    if(m){
+      try{
+        const snap = JSON.parse(await decompressFromPayload(m[1]));
+        if(confirm('Открыть план из ссылки? Данные в этом браузере будут заменены. Сначала можно сделать экспорт.')){
+          state = migrateState(snapshotToState(snap));
+          history.replaceState(null, '', location.pathname + location.search);
+          return true;
+        }
+      }catch(e){
+        alert('Ссылка повреждена или несовместима.');
+      }
+      history.replaceState(null, '', location.pathname + location.search);
+      return false;
+    }
+
+    // legacy links from older versions of this file (full state, no compression)
+    m = hash.match(/^#data=(.+)$/);
+    if(m){
+      try{
+        const parsed = decodeState(m[1]);
+        if(confirm('Открыть план из ссылки? Данные в этом браузере будут заменены. Сначала можно сделать экспорт.')){
+          state = migrateState(parsed);
+          history.replaceState(null, '', location.pathname + location.search);
+          return true;
+        }
+      }catch(e){
+        alert('Ссылка повреждена или несовместима.');
+      }
+      history.replaceState(null, '', location.pathname + location.search);
+      return false;
+    }
+
+    return false;
+  }
+
+  document.getElementById('shareBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('shareBtn');
+    const prevLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Готовим ссылку…';
+    try{
+      const url = await buildShareUrl();
+      if(url.length > 6000){
+        alert('Ссылка получилась длинной (' + Math.round(url.length/1024) + ' КБ) — это бывает при большом количестве дней и мест. Ссылка не содержит фото — если нужна полная копия со всем, используйте «Экспорт в файл».');
+      }
+      try{
+        await navigator.clipboard.writeText(url);
+        btn.textContent = '✓ Ссылка скопирована';
+      }catch(e){
+        prompt('Скопируйте ссылку:', url);
+        btn.textContent = prevLabel;
+      }
+    }catch(e){
+      alert('Не удалось создать ссылку.');
+      btn.textContent = prevLabel;
+    }finally{
+      setTimeout(()=>{ btn.textContent = prevLabel; btn.disabled = false; }, 1800);
+    }
+  });
+
+
+  /* ---------- PRINT / PDF ---------- */
+  function formatDateRu(iso){
+    if(!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if(isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  function printDays(days, heading){
+    const w = window.open('', '_blank');
+    if(!w){ alert('Разрешите всплывающие окна, чтобы открыть версию для печати.'); return; }
+    const esc = escapeHtml;
+    const grandTotal = days.reduce((a,d)=> a + d.items.reduce((s,it)=> s + (parseFloat(it.cost)||0), 0), 0);
+    const sections = days.map(day=>{
+      const total = day.items.reduce((a,it)=> a + (parseFloat(it.cost)||0), 0);
+      const rows = day.items.map(it=>`
+        <tr>
+          <td class="t">${esc(it.time)}</td>
+          <td class="act">${esc(it.activity)}${it.category ? `<span class="tag">${esc(it.category)}</span>` : ''}</td>
+          <td class="notes">${esc(it.notes)}</td>
+          <td class="r">${it.cost !== '' && it.cost != null ? esc(fmt(it.cost)) : ''}</td>
+        </tr>`).join('') || '<tr><td colspan="4" class="empty-row">Пункты ещё не добавлены</td></tr>';
+      return `<section>
+        <div class="day-banner">
+          <h2>${esc(day.title)}</h2>
+          ${day.date ? `<span class="day-date">${esc(formatDateRu(day.date))}</span>` : ''}
+        </div>
+        <table>
+          <thead><tr><th style="width:60px;">Время</th><th>Активность</th><th>Заметки</th><th class="r" style="width:80px;">Стоимость</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr><td colspan="3">Итого за день</td><td class="r">${esc(fmt(total))}</td></tr></tfoot>
+        </table>
+      </section>`;
+    }).join('');
+    w.document.write(
+      '<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>' + esc(heading) + '</title><style>'
+      + '@page{ margin: 20mm 16mm; }'
+      + '*{box-sizing:border-box;}'
+      + 'body{font-family:Georgia,"Times New Roman",serif;color:#2E2A2C;margin:0;padding:28px 30px;}'
+      + '.doc-header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:3px solid #E38AA9;padding-bottom:14px;margin-bottom:26px;}'
+      + '.doc-header h1{font-style:italic;font-weight:400;font-size:27px;margin:0;color:#4A7355;}'
+      + '.doc-header .brand{font-family:Arial,sans-serif;font-size:11px;color:#96898b;letter-spacing:.05em;text-transform:uppercase;}'
+      + 'section{page-break-inside:avoid;margin-bottom:26px;}'
+      + '.day-banner{display:flex;align-items:baseline;gap:12px;margin-bottom:9px;background:linear-gradient(90deg,#FBEAF0,#E9F2EA);border-radius:8px;padding:9px 14px;}'
+      + '.day-banner h2{font-style:italic;font-weight:400;font-size:18px;margin:0;color:#C85F86;}'
+      + '.day-banner .day-date{font-family:Arial,sans-serif;font-size:11.5px;color:#74696B;}'
+      + 'table{width:100%;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:11.5px;}'
+      + 'th{text-align:left;padding:7px 8px;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:#4A7355;border-bottom:2px solid #2E2A2C;}'
+      + 'td{padding:8px;border-bottom:1px solid #ECDFE1;vertical-align:top;}'
+      + 'tbody tr:nth-child(even){background:#FBF7F5;}'
+      + 'td.t{white-space:nowrap;color:#74696B;font-weight:600;}'
+      + 'td.act{font-weight:600;}'
+      + 'td.notes{color:#5c5456;}'
+      + '.tag{display:inline-block;margin-left:7px;font-family:Arial,sans-serif;font-size:9px;font-weight:700;color:#4A7355;background:#E9F2EA;border-radius:999px;padding:2px 8px;vertical-align:middle;}'
+      + 'td.r,th.r{text-align:right;white-space:nowrap;font-weight:700;}'
+      + 'tfoot td{font-weight:700;background:#FBEAF0;border-top:2px solid #C85F86;border-bottom:none;}'
+      + '.empty-row{text-align:center;color:#aaa;font-style:italic;}'
+      + '.grand-total{margin-top:6px;text-align:right;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#C85F86;}'
+      + '.doc-footer{margin-top:32px;text-align:center;font-family:Arial,sans-serif;font-size:10px;color:#a99;}'
+      + '@media print{ .day-banner,tbody tr:nth-child(even),tfoot td{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }'
+      + '</style></head><body>'
+      + '<div class="doc-header"><h1>' + esc(heading) + '</h1><span class="brand">Travel-планер</span></div>'
+      + sections
+      + (days.length > 1 ? '<div class="grand-total">Итого за поездку: ' + esc(fmt(grandTotal)) + '</div>' : '')
+      + '<div class="doc-footer">Сформировано в Travel-планере · ' + esc(new Date().toLocaleDateString('ru-RU')) + '</div>'
+      + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},150);};</scr' + 'ipt>'
+      + '</body></html>'
+    );
+    w.document.close();
+  }
+  document.getElementById('pdfAllDaysBtn').addEventListener('click', ()=>{
+    if(!state.days.length){ alert('Сначала добавьте хотя бы один день.'); return; }
+    printDays(state.days, (state.trip.name || 'План поездки') + ' — план по дням');
+  });
+
+  /* ---------- TABS ---------- */
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'places') renderPlaces();
+      if(btn.dataset.tab === 'budget' || btn.dataset.tab === 'expenses') renderDaySpending();
+    });
+  });
+
+  /* ---------- BUDGET ---------- */
+  const totalBudgetInput = document.getElementById('totalBudgetInput');
+  totalBudgetInput.addEventListener('input', ()=>{
+    state.totalBudget = parseFloat(totalBudgetInput.value) || 0;
+    updateBudgetComputed();
+    scheduleSave();
+  });
+
+  const peopleCountInput = document.getElementById('peopleCountInput');
+  peopleCountInput.addEventListener('input', ()=>{
+    state.peopleCount = Math.max(1, parseInt(peopleCountInput.value, 10) || 1);
+    updateBudgetComputed();
+    scheduleSave();
+  });
+
+  // Two phases of spending, rendered as two separate tables/charts.
+  const PHASES = [
+    { key: 'before', label: 'До поездки', tbodyId: 'categoryBodyBefore', plannedId: 'totalPlannedBefore', actualId: 'totalActualBefore', remainingId: 'totalRemainingBefore', addBtnId: 'addCategoryBeforeBtn', pfId: 'planFactBeforeEl' },
+    { key: 'during', label: 'Во время поездки', tbodyId: 'categoryBodyDuring', plannedId: 'totalPlannedDuring', actualId: 'totalActualDuring', remainingId: 'totalRemainingDuring', addBtnId: 'addCategoryDuringBtn', pfId: 'planFactDuringEl' }
+  ];
+
+  PHASES.forEach(ph=>{
+    document.getElementById(ph.addBtnId).addEventListener('click', ()=>{
+      state.categories.push({ id: uid(), name: 'Новая категория', planned: 0, actual: 0, phase: ph.key });
+      renderBudget();
+      scheduleSave();
+    });
+  });
+
+  function fmt(n){
+    n = Number(n)||0;
+    return n.toLocaleString('ru-RU', {maximumFractionDigits:2});
+  }
+
+  // Grows a textarea to fit its content instead of hiding overflow text.
+  function autoGrowTextarea(el){
+    if(!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  function renderBudget(){
+    totalBudgetInput.value = state.totalBudget;
+    peopleCountInput.value = state.peopleCount;
+
+    PHASES.forEach(ph=>{
+      const body = document.getElementById(ph.tbodyId);
+      body.innerHTML = '';
+      const items = state.categories.filter(c => (c.phase || 'during') === ph.key);
+      const countEl = document.getElementById(ph.key === 'before' ? 'phaseCountBefore' : 'phaseCountDuring');
+      if(countEl) countEl.textContent = items.length ? `${items.length} ${pluralRu(items.length, 'категория', 'категории', 'категорий')}` : 'нет категорий';
+
+      items.forEach((cat, localIdx)=>{
+        const idx = state.categories.indexOf(cat);
+        const remaining = (Number(cat.planned)||0) - (Number(cat.actual)||0);
+        const color = PALETTE[localIdx % PALETTE.length];
+
+        const tr = document.createElement('tr');
+        if((Number(cat.actual)||0) > (Number(cat.planned)||0)) tr.classList.add('over-budget');
+        tr.innerHTML = `
+          <td class="dot-cell"><span class="swatch" style="background:${color}"></span></td>
+          <td><input type="text" value="${escapeAttr(cat.name)}" data-field="name"></td>
+          <td><input type="number" class="num" value="${cat.planned}" data-field="planned"></td>
+          <td><input type="number" class="num" value="${cat.actual}" data-field="actual"></td>
+          <td class="remaining-cell" style="color:${remaining<0?'#B4483F':'var(--ink-soft)'};text-align:right;padding-right:12px;">${fmt(remaining)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn" data-action="swap-phase" title="${ph.key === 'before' ? 'Перенести «во время поездки»' : 'Перенести «до поездки»'}">⇄</button>
+              <button class="icon-btn" data-action="remove" title="Удалить">✕</button>
+            </div>
+          </td>
+        `;
+        tr.querySelectorAll('input').forEach(inp=>{
+          inp.addEventListener('input', ()=>{
+            const field = inp.dataset.field;
+            cat[field] = field==='name' ? inp.value : (parseFloat(inp.value)||0);
+            updateBudgetComputed();
+            scheduleSave();
+          });
+        });
+        tr.querySelector('[data-action="remove"]').addEventListener('click', ()=>{
+          state.categories.splice(idx,1);
+          renderBudget();
+          scheduleSave();
+        });
+        tr.querySelector('[data-action="swap-phase"]').addEventListener('click', ()=>{
+          cat.phase = ph.key === 'before' ? 'during' : 'before';
+          renderBudget();
+          scheduleSave();
+        });
+        body.appendChild(tr);
+      });
+    });
+
+    updateBudgetComputed();
+    renderDaySpending();
+  }
+
+  function updateBudgetComputed(){
+    let sumPlanned = 0, sumActual = 0;
+
+    PHASES.forEach(ph=>{
+      const rows = document.querySelectorAll('#' + ph.tbodyId + ' tr');
+      const items = state.categories.filter(c => (c.phase || 'during') === ph.key);
+      let pPlanned = 0, pActual = 0;
+
+      items.forEach((cat, i)=>{
+        const planned = Number(cat.planned)||0;
+        const actual = Number(cat.actual)||0;
+        pPlanned += planned;
+        pActual += actual;
+        sumPlanned += planned;
+        sumActual += actual;
+        const remaining = planned - actual;
+        const row = rows[i];
+        if(row){
+          row.classList.toggle('over-budget', actual > planned);
+          const cell = row.querySelector('.remaining-cell');
+          if(cell){
+            cell.textContent = fmt(remaining);
+            cell.style.color = remaining < 0 ? '#B4483F' : 'var(--ink-soft)';
+          }
+        }
+      });
+
+      document.getElementById(ph.plannedId).textContent = fmt(pPlanned);
+      document.getElementById(ph.actualId).textContent = fmt(pActual);
+      document.getElementById(ph.remainingId).textContent = fmt(pPlanned - pActual);
+    });
+
+    const gp = document.getElementById('grandTotalPlanned');
+    if(gp){
+      gp.textContent = fmt(sumPlanned);
+      document.getElementById('grandTotalActual').textContent = fmt(sumActual);
+      const gr = document.getElementById('grandTotalRemaining');
+      gr.textContent = fmt(sumPlanned - sumActual);
+      gr.style.color = (sumPlanned - sumActual) < 0 ? '#B4483F' : 'var(--ink)';
+    }
+
+    const remainingAmt = (Number(state.totalBudget)||0) - sumActual;
+    const remEl = document.getElementById('remainingAmount');
+    remEl.textContent = fmt(remainingAmt);
+    remEl.style.color = remainingAmt < 0 ? '#B4483F' : 'var(--ink)';
+
+    const people = Math.max(1, Number(state.peopleCount) || 1);
+    const perPerson = (Number(state.totalBudget) || 0) / people;
+    document.getElementById('perPersonAmount').textContent = fmt(perPerson);
+
+    renderDonut(sumActual);
+    renderPlanFact();
+  }
+
+  // Plan-vs-actual bars, split into the two phases.
+  function renderPlanFact(){
+    PHASES.forEach(ph=>{
+      const el = document.getElementById(ph.pfId);
+      if(!el) return;
+      const cats = state.categories.filter(c => (c.phase || 'during') === ph.key);
+      if(!cats.length){ el.innerHTML = '<div class="empty">Категорий пока нет</div>'; return; }
+      let max = 0;
+      cats.forEach(c=>{ max = Math.max(max, Number(c.planned)||0, Number(c.actual)||0); });
+      if(max <= 0){ el.innerHTML = '<div class="empty">Введите суммы плана и факта</div>'; return; }
+      el.innerHTML = cats.map(c=>{
+        const p = Number(c.planned)||0, a = Number(c.actual)||0;
+        const over = a > p;
+        return `<div class="pf-row">
+          <div class="pf-label" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
+          <div class="pf-bars">
+            <div class="pf-bar"><b>план</b><span class="pf-track"><span class="pf-fill plan" style="width:${p/max*100}%"></span></span><em>${fmt(p)}</em></div>
+            <div class="pf-bar"><b>факт</b><span class="pf-track"><span class="pf-fill fact${over?' over':''}" style="width:${a/max*100}%"></span></span><em class="${over?'over':''}">${fmt(a)}${over?' ⚠':''}</em></div>
+          </div>
+        </div>`;
+      }).join('');
+    });
+  }
+
+  function renderDonut(sumActual){
+    const donut = document.getElementById('donutEl');
+    const legend = document.getElementById('legendEl');
+    legend.innerHTML = '';
+
+    if(sumActual <= 0 || state.categories.every(c => (Number(c.actual)||0) === 0)){
+      donut.style.background = 'var(--green-tint)';
+      legend.innerHTML = '<div class="empty">Пока нет расходов</div>';
+      return;
+    }
+
+    let stops = [];
+    let acc = 0;
+    state.categories.forEach((cat, idx)=>{
+      const val = Number(cat.actual)||0;
+      if(val<=0) return;
+      const color = PALETTE[idx % PALETTE.length];
+      const start = (acc/sumActual)*360;
+      acc += val;
+      const end = (acc/sumActual)*360;
+      stops.push(`${color} ${start}deg ${end}deg`);
+
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `<span class="dot" style="background:${color}"></span><span class="name">${escapeHtml(cat.name)}</span><span class="val">${fmt(val)}</span>`;
+      legend.appendChild(row);
+    });
+    donut.style.background = `conic-gradient(${stops.join(',')})`;
+  }
+
+  // Bar chart of spending per day (sum of item costs) — shows which day cost the most.
+  function renderDaySpending(){
+    const el = document.getElementById('daySpendingEl');
+    if(!el) return;
+    const sums = state.days.map(d=>({
+      title: d.title || 'День',
+      date: d.date,
+      sum: d.items.reduce((a,it)=> a + (parseFloat(it.cost)||0), 0)
+    }));
+    const anySpend = sums.some(s=> s.sum > 0);
+    if(!sums.length || !anySpend){
+      el.innerHTML = '<div class="empty">Нет трат по дням. Укажите стоимость пунктов во вкладке «План по дням».</div>';
+      return;
+    }
+    const max = Math.max(...sums.map(s=>s.sum));
+    const grand = sums.reduce((a,s)=>a+s.sum,0);
+    el.innerHTML = sums.map(s=>{
+      const pct = max > 0 ? (s.sum / max * 100) : 0;
+      const peak = s.sum === max && s.sum > 0;
+      const label = escapeHtml(s.title) + (s.date ? ' · ' + escapeHtml(s.date) : '');
+      return `<div class="daybar-row">
+        <div class="daybar-label" title="${label}">${label}</div>
+        <div class="daybar-track"><div class="daybar-fill${peak ? ' peak' : ''}" style="width:${pct}%"></div></div>
+        <div class="daybar-val">${fmt(s.sum)}</div>
+      </div>`;
+    }).join('') + `<div class="daybar-row" style="margin-top:4px;font-weight:700;">
+        <div class="daybar-label">Всего</div><div></div><div class="daybar-val">${fmt(grand)}</div>
+      </div>`;
+  }
+
+  /* ---------- DAILY PLAN ---------- */
+  document.getElementById('addDayBtn').addEventListener('click', ()=>{
+    state.days.push({ id: uid(), title: 'День '+(state.days.length+1), date: '', items: [] });
+    cascadeDayDates();
+    renderDays();
+    scheduleSave();
+  });
+
+  let dragState = null; // { dayIdx, itemIdx }
+
+  function renderDays(){
+    const container = document.getElementById('daysContainer');
+    container.innerHTML = '';
+    if(state.days.length===0){
+      container.innerHTML = '<div class="empty">Дни ещё не добавлены</div>';
+      renderDaySpending();
+      return;
+    }
+    state.days.forEach((day, dIdx)=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'daily-day';
+      wrap.innerHTML = `
+        <div class="day-head">
+          <input class="day-title" type="text" value="${escapeAttr(day.title)}">
+          <input class="day-date" type="date" value="${escapeAttr(day.date)}">
+          <div class="day-tools">
+            <button class="icon-btn" data-action="dup-day" title="Дублировать день">⧉</button>
+            <button class="icon-btn" data-action="export-day" title="Экспорт дня в файл (JSON)">⬇</button>
+            <button class="icon-btn" data-action="pdf-day" title="PDF этого дня">🖨</button>
+            <button class="icon-btn" data-action="remove-day" title="Удалить день">✕</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th style="width:22px;"></th>
+            <th style="width:82px;">Время</th>
+            <th>Активность</th>
+            <th style="width:130px;">Категория</th>
+            <th style="width:90px;">Стоимость</th>
+            <th>Заметки</th>
+            <th style="width:76px;"></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+        </div>
+        <button class="add-row" data-action="add-item" style="margin-top:8px;">+ Добавить пункт</button>
+      `;
+      const titleInp = wrap.querySelector('.day-title');
+      titleInp.addEventListener('input', ()=>{ day.title = titleInp.value; scheduleSave(); renderDaySpending(); });
+      const dateInp = wrap.querySelector('.day-date');
+      dateInp.addEventListener('change', ()=>{
+        day.date = dateInp.value;
+        cascadeDayDates();   // fill following empty days with +1 day each
+        renderDays();
+        scheduleSave();
+      });
+      wrap.querySelector('[data-action="remove-day"]').addEventListener('click', ()=>{
+        state.days.splice(dIdx,1); renderDays(); scheduleSave();
+      });
+      wrap.querySelector('[data-action="dup-day"]').addEventListener('click', ()=>{
+        const copy = JSON.parse(JSON.stringify(day));
+        copy.id = uid();
+        copy.title = (day.title || 'День') + ' (копия)';
+        copy.items = (copy.items || []).map(it=> ({ ...it, id: uid() }));
+        state.days.splice(dIdx + 1, 0, copy);
+        renderDays(); scheduleSave();
+      });
+      wrap.querySelector('[data-action="export-day"]').addEventListener('click', ()=>{
+        const safe = (day.title || 'day').replace(/[^\wа-яёА-ЯЁ]+/gi, '-').replace(/^-+|-+$/g,'') || 'day';
+        downloadJSON('day-' + safe + '.json', { type: 'travel-planner-day', version: 1, day });
+      });
+      wrap.querySelector('[data-action="pdf-day"]').addEventListener('click', ()=>{
+        printDays([day], (day.title || 'День') + (day.date ? ' — ' + day.date : ''));
+      });
+      wrap.querySelector('[data-action="add-item"]').addEventListener('click', ()=>{
+        // Manual add — category stays empty on purpose.
+        day.items.push({ id: uid(), time:'', activity:'', category:'', cost:'', notes:'', mapLink:'' });
+        renderDays(); scheduleSave();
+      });
+
+      const tbody = wrap.querySelector('tbody');
+
+      // Flag items whose times overlap (treating each as a ~1h block).
+      const clash = day.items.map(()=>false);
+      for(let i=0;i<day.items.length;i++){
+        for(let j=i+1;j<day.items.length;j++){
+          const a = timeToMin(day.items[i].time), b = timeToMin(day.items[j].time);
+          if(a != null && b != null && Math.abs(a - b) < 60){ clash[i] = clash[j] = true; }
+        }
+      }
+      if(clash.some(Boolean)){
+        const warn = document.createElement('div');
+        warn.className = 'clash-warn';
+        warn.textContent = '⚠ Пункты, отмеченные красным, пересекаются по времени (меньше часа между ними)';
+        wrap.querySelector('.table-scroll').before(warn);
+      }
+
+      day.items.forEach((item, iIdx)=>{
+        const tr = document.createElement('tr');
+        if(clash[iIdx]) tr.classList.add('time-clash');
+        tr.draggable = true;
+        tr.innerHTML = `
+          <td class="drag-handle" title="Перетащите, чтобы изменить порядок">⋮⋮</td>
+          <td><input type="time" value="${escapeAttr(item.time)}" data-field="time"></td>
+          <td><input type="text" value="${escapeAttr(item.activity)}" placeholder="Например: экскурсия" data-field="activity"></td>
+          <td><input type="text" list="catList" value="${escapeAttr(item.category||'')}" placeholder="категория" data-field="category"></td>
+          <td><input type="number" class="num" value="${escapeAttr(item.cost)}" placeholder="0" data-field="cost"></td>
+          <td><textarea data-field="notes" rows="1" placeholder="Заметка">${escapeHtml(item.notes)}</textarea></td>
+          <td>
+            <div class="row-actions">
+              ${item.mapLink ? `<button class="icon-btn" data-action="map-item" title="Открыть ссылку на карту">🗺</button>` : ''}
+              <button class="icon-btn" data-action="move-up" title="Переместить выше">↑</button>
+              <button class="icon-btn" data-action="move-down" title="Переместить ниже">↓</button>
+              <button class="icon-btn" data-action="remove-item" title="Удалить">✕</button>
+            </div>
+          </td>
+        `;
+        tr.querySelectorAll('input').forEach(inp=>{
+          inp.addEventListener('input', ()=>{
+            item[inp.dataset.field] = inp.value;
+            scheduleSave();
+            if(inp.dataset.field === 'cost') renderDaySpending();
+          });
+        });
+        const timeInp = tr.querySelector('input[type=time]');
+        if(timeInp) timeInp.addEventListener('change', ()=> renderDays()); // refresh overlap highlight
+        const mapBtn = tr.querySelector('[data-action="map-item"]');
+        if(mapBtn){
+          mapBtn.addEventListener('click', ()=>{
+            window.open(item.mapLink, '_blank', 'noopener');
+          });
+        }
+        const notesEl = tr.querySelector('textarea[data-field="notes"]');
+        notesEl.addEventListener('input', ()=>{
+          item.notes = notesEl.value;
+          autoGrowTextarea(notesEl);
+          scheduleSave();
+        });
+        tr.querySelector('[data-action="remove-item"]').addEventListener('click', ()=>{
+          day.items.splice(iIdx,1); renderDays(); scheduleSave();
+        });
+        tr.querySelector('[data-action="move-up"]').addEventListener('click', ()=>{
+          if(iIdx===0) return;
+          const arr = day.items;
+          [arr[iIdx-1], arr[iIdx]] = [arr[iIdx], arr[iIdx-1]];
+          renderDays(); scheduleSave();
+        });
+        tr.querySelector('[data-action="move-down"]').addEventListener('click', ()=>{
+          if(iIdx===day.items.length-1) return;
+          const arr = day.items;
+          [arr[iIdx], arr[iIdx+1]] = [arr[iIdx+1], arr[iIdx]];
+          renderDays(); scheduleSave();
+        });
+
+        tr.addEventListener('dragstart', (e)=>{
+          dragState = { dayIdx: dIdx, itemIdx: iIdx };
+          tr.classList.add('dragging');
+          if(e.dataTransfer){ e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', ''); }
+        });
+        tr.addEventListener('dragend', ()=>{
+          tr.classList.remove('dragging');
+          dragState = null;
+        });
+        tr.addEventListener('dragover', (e)=>{
+          if(!dragState || dragState.dayIdx !== dIdx) return;
+          e.preventDefault();
+          tr.classList.add('drag-over');
+        });
+        tr.addEventListener('dragleave', ()=>{
+          tr.classList.remove('drag-over');
+        });
+        tr.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          tr.classList.remove('drag-over');
+          if(!dragState || dragState.dayIdx !== dIdx) { dragState = null; return; }
+          const from = dragState.itemIdx;
+          const to = iIdx;
+          dragState = null;
+          if(from === to) return;
+          const arr = day.items;
+          const [moved] = arr.splice(from, 1);
+          arr.splice(to, 0, moved);
+          renderDays(); scheduleSave();
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      container.appendChild(wrap);
+      // Grow each notes textarea now that it's actually in the document —
+      // measuring scrollHeight before attaching gives the wrong (too small) size.
+      wrap.querySelectorAll('textarea[data-field="notes"]').forEach(autoGrowTextarea);
+    });
+    renderDaySpending();
+  }
+
+  /* ---------- PACKING ---------- */
+  document.getElementById('addPackGroupBtn').addEventListener('click', ()=>{
+    const input = document.getElementById('newPackGroup');
+    const name = input.value.trim();
+    if(!name) return;
+    state.packing.push({ id: uid(), group: name, items: [] });
+    input.value = '';
+    renderPacking();
+    scheduleSave();
+  });
+
+  function renderPacking(){
+    const container = document.getElementById('packingContainer');
+    container.innerHTML = '';
+    if(state.packing.length===0){
+      container.innerHTML = '<div class="empty">Список пуст — добавьте категорию ниже</div>';
+      return;
+    }
+    state.packing.forEach((group, gIdx)=>{
+      const checkedCount = group.items.filter(i=>i.checked).length;
+      const wrap = document.createElement('div');
+      wrap.className = 'packing-group';
+      wrap.innerHTML = `
+        <h3>${escapeHtml(group.group)} <span class="count">${checkedCount}/${group.items.length} · <button class="icon-btn" data-action="remove-group" style="padding:0;">удалить</button></span></h3>
+        <div class="items"></div>
+        <button class="add-row" data-action="add-item" style="margin-top:6px;">+ Добавить вещь</button>
+      `;
+      wrap.querySelector('[data-action="remove-group"]').addEventListener('click', ()=>{
+        state.packing.splice(gIdx,1); renderPacking(); scheduleSave();
+      });
+      wrap.querySelector('[data-action="add-item"]').addEventListener('click', ()=>{
+        group.items.push({ id: uid(), name:'', checked:false });
+        renderPacking(); scheduleSave();
+      });
+      const itemsEl = wrap.querySelector('.items');
+      group.items.forEach((item, iIdx)=>{
+        const row = document.createElement('div');
+        row.className = 'item-row' + (item.checked ? ' checked' : '');
+        row.innerHTML = `
+          <input type="checkbox" ${item.checked?'checked':''}>
+          <input type="text" value="${escapeAttr(item.name)}" placeholder="Название вещи">
+          <button class="icon-btn" data-action="remove-item">✕</button>
+        `;
+        row.querySelector('[type=checkbox]').addEventListener('change', (e)=>{
+          item.checked = e.target.checked; renderPacking(); scheduleSave();
+        });
+        row.querySelector('[type=text]').addEventListener('input', (e)=>{
+          item.name = e.target.value; scheduleSave();
+        });
+        row.querySelector('[data-action="remove-item"]').addEventListener('click', ()=>{
+          group.items.splice(iIdx,1); renderPacking(); scheduleSave();
+        });
+        itemsEl.appendChild(row);
+      });
+      container.appendChild(wrap);
+    });
+  }
+
+  /* ---------- PLACES ---------- */
+  document.getElementById('addPlaceBtn').addEventListener('click', ()=>{
+    state.places.push({ id: uid(), name:'Новое место', categoryIds:[], location:'', hoursFrom:'', hoursTo:'', cost:'', link:'', mapLink:'', rating:0, remark:'', photos:[] });
+    renderPlaces();
+    scheduleSave();
+  });
+
+  // Reads an image file, downsizes it, and returns a compact JPEG data URL.
+  function resizeImageToDataUrl(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error('read failed'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('image load failed'));
+        img.onload = () => {
+          let { width, height } = img;
+          if(width > maxDim || height > maxDim){
+            if(width > height){ height = Math.round(height * (maxDim / width)); width = maxDim; }
+            else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function setPlacePhoto(place, fileList){
+    const file = fileList && fileList[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')){ alert('Выберите файл изображения.'); return; }
+    try{
+      place.photos = [await resizeImageToDataUrl(file, 640, 0.72)];
+      renderPlaces();
+      scheduleSave();
+    }catch(err){
+      alert('Не удалось загрузить это фото — попробуйте другой файл.');
+    }
+  }
+
+  /* ---- place categories (user-defined folders: cities, districts, types...) ---- */
+  document.getElementById('addPlaceCategoryBtn').addEventListener('click', ()=>{
+    const input = document.getElementById('newPlaceCategoryInput');
+    const name = input.value.trim();
+    if(!name) return;
+    if(state.placeCategories.some(c => c.name.toLowerCase() === name.toLowerCase())){
+      input.value = '';
+      return;
+    }
+    state.placeCategories.push({ id: uid(), name });
+    input.value = '';
+    renderPlaces();
+    scheduleSave();
+  });
+  document.getElementById('newPlaceCategoryInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('addPlaceCategoryBtn').click(); }
+  });
+
+  function renderPlaceCategoryChips(){
+    const wrap = document.getElementById('placeCategoryChips');
+    if(!state.placeCategories.length){
+      wrap.innerHTML = '<span style="color:var(--ink-soft);font-size:12.5px;">Категорий пока нет — добавьте первую ниже</span>';
+      return;
+    }
+    wrap.innerHTML = state.placeCategories.map(c => `
+      <span class="cat-chip">${escapeHtml(c.name)} <button type="button" data-action="del-place-category" data-id="${c.id}" title="Удалить категорию">✕</button></span>
+    `).join('');
+    wrap.querySelectorAll('[data-action="del-place-category"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        const cat = state.placeCategories.find(c => c.id === id);
+        if(!confirm(`Удалить категорию «${cat ? cat.name : ''}»? Места останутся, но потеряют эту метку.`)) return;
+        state.placeCategories = state.placeCategories.filter(c => c.id !== id);
+        state.places.forEach(p => { p.categoryIds = (p.categoryIds || []).filter(cid => cid !== id); });
+        renderPlaces();
+        scheduleSave();
+      });
+    });
+  }
+
+  const PLACE_FIELDS = [
+    ['location','Локация'], ['cost','Стоимость'], ['link','Ссылка'], ['mapLink','Ссылка на карты'], ['remark','Заметка']
+  ];
+
+  function buildPlaceCard(place, idx){
+    const card = document.createElement('div');
+    card.className = 'place-card';
+    const dayOptions = state.days.map(d=>`<option value="${d.id}">${escapeHtml(d.title)}</option>`).join('');
+    const main = place.photos[0];
+    const photoInner = main
+      ? `<img src="${main}" alt="${escapeAttr(place.name)}">
+         <button class="remove-photo" type="button" data-action="remove-photo" title="Удалить фото">✕</button>
+         <div class="change-hint">Нажмите, чтобы заменить</div>`
+      : `<div class="placeholder"><span class="icon">📷</span><span class="txt">Добавить фото</span></div>`;
+    const curRating = Number(place.rating) || 0;
+    const starsHtml = [1,2,3,4,5].map(n =>
+      `<span class="star" data-value="${n}">${n <= curRating ? '★' : '☆'}</span>`
+    ).join('');
+    const catIds = place.categoryIds || [];
+    const catTogglesHtml = state.placeCategories.length
+      ? state.placeCategories.map(c => `<button type="button" class="cat-toggle${catIds.includes(c.id) ? ' active' : ''}" data-cat-id="${c.id}">${escapeHtml(c.name)}</button>`).join('')
+      : '<span style="color:var(--ink-soft);font-size:11.5px;">Сначала добавьте категории выше</span>';
+    card.innerHTML = `
+      <div class="photo">
+        ${photoInner}
+        <input type="file" accept="image/*" class="photo-input">
+      </div>
+      <div class="body">
+        <input class="name" type="text" value="${escapeAttr(place.name)}" data-field="name">
+        <div class="place-field" style="align-items:flex-start;">
+          <span class="k" style="padding-top:5px;">Категории</span>
+          <div class="place-cat-toggles">${catTogglesHtml}</div>
+        </div>
+        <div class="place-field">
+          <span class="k">Часы работы</span>
+          <div style="display:flex;align-items:center;gap:5px;flex:1;">
+            <input type="time" value="${escapeAttr(place.hoursFrom||'')}" data-field="hoursFrom" style="flex:1;">
+            <span style="color:var(--ink-soft);font-size:11px;">–</span>
+            <input type="time" value="${escapeAttr(place.hoursTo||'')}" data-field="hoursTo" style="flex:1;">
+          </div>
+        </div>
+        <div class="place-field">
+          <span class="k">Оценка</span>
+          <div class="stars">${starsHtml}</div>
+        </div>
+        ${PLACE_FIELDS.map(([key,label])=>`
+          <div class="place-field">
+            <span class="k">${label}</span>
+            <input type="text" value="${escapeAttr(place[key]||'')}" data-field="${key}">
+          </div>
+        `).join('')}
+        <div class="place-field" style="border-bottom:none;padding-top:10px;">
+          <select class="add-to-day-select">
+            ${dayOptions}
+            <option value="__new__">+ Новый день</option>
+          </select>
+        </div>
+        <button class="remove-place" data-action="add-to-day" style="background:var(--green-tint);color:var(--green-deep);margin-bottom:8px;">Добавить в план дня</button>
+        <button class="remove-place" data-action="map" style="background:var(--pink-tint);color:var(--pink-deep);margin-bottom:8px;">🗺 Открыть в Картах</button>
+        <button class="remove-place" data-action="remove">Удалить место</button>
+      </div>
+    `;
+    card.querySelectorAll('[data-field]').forEach(inp=>{
+      const ev = inp.tagName === 'SELECT' ? 'change' : 'input';
+      inp.addEventListener(ev, ()=>{
+        place[inp.dataset.field] = inp.value;
+        scheduleSave();
+      });
+    });
+
+    // Category toggles — a place can belong to several folders at once.
+    card.querySelectorAll('.cat-toggle').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.catId;
+        place.categoryIds = place.categoryIds || [];
+        const i = place.categoryIds.indexOf(id);
+        if(i === -1) place.categoryIds.push(id); else place.categoryIds.splice(i, 1);
+        renderPlaces();
+        scheduleSave();
+      });
+    });
+
+    // Star rating.
+    const starsWrap = card.querySelector('.stars');
+    const starEls = Array.from(starsWrap.querySelectorAll('.star'));
+    starEls.forEach(starEl=>{
+      starEl.addEventListener('click', ()=>{
+        const val = parseInt(starEl.dataset.value, 10);
+        place.rating = (Number(place.rating) === val) ? 0 : val;
+        renderPlaces();
+        scheduleSave();
+      });
+      starEl.addEventListener('mouseenter', ()=>{
+        const val = parseInt(starEl.dataset.value, 10);
+        starEls.forEach(s => { s.textContent = parseInt(s.dataset.value, 10) <= val ? '★' : '☆'; });
+      });
+    });
+    starsWrap.addEventListener('mouseleave', ()=>{
+      const cur = Number(place.rating) || 0;
+      starEls.forEach(s => { s.textContent = parseInt(s.dataset.value, 10) <= cur ? '★' : '☆'; });
+    });
+
+    // Photo — a single image per place; clicking it replaces the current one.
+    const photoEl = card.querySelector('.photo');
+    const fileInput = card.querySelector('.photo-input');
+    photoEl.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-action="remove-photo"]')) return;
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', ()=>{
+      setPlacePhoto(place, fileInput.files);
+      fileInput.value = '';
+    });
+    const removePhotoBtn = card.querySelector('[data-action="remove-photo"]');
+    if(removePhotoBtn){
+      removePhotoBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        place.photos = [];
+        renderPlaces();
+        scheduleSave();
+      });
+    }
+
+    const addBtn = card.querySelector('[data-action="add-to-day"]');
+    addBtn.addEventListener('click', ()=>{
+      const sel = card.querySelector('.add-to-day-select');
+      let day;
+      if(sel.value === '__new__' || !sel.value){
+        day = { id: uid(), title: 'День '+(state.days.length+1), date: '', items: [] };
+        state.days.push(day);
+        cascadeDayDates();
+      } else {
+        day = state.days.find(d => d.id === sel.value);
+      }
+      if(!day) return;
+      const hoursLabel = (place.hoursFrom || place.hoursTo)
+        ? `${place.hoursFrom || '?'}–${place.hoursTo || '?'}`
+        : '';
+      const firstCatName = (place.categoryIds||[]).map(id=>{
+        const c = state.placeCategories.find(x=>x.id===id);
+        return c ? c.name : '';
+      }).filter(Boolean)[0] || '';
+      day.items.push({
+        id: uid(),
+        time: place.hoursFrom || '',
+        activity: place.name,
+        category: firstCatName,   // auto-fill day-item category from the place's first folder
+        cost: place.cost && !isNaN(parseFloat(place.cost)) ? String(parseFloat(place.cost)) : '',
+        notes: [place.location, hoursLabel].filter(Boolean).join(' · '),
+        mapLink: (place.mapLink || '').trim()
+      });
+      renderDays();
+      renderPlaces();
+      scheduleSave();
+      const prevText = addBtn.textContent;
+      addBtn.textContent = 'Добавлено ✓';
+      setTimeout(()=>{ if(addBtn.isConnected) addBtn.textContent = prevText; }, 1200);
+    });
+    card.querySelector('[data-action="map"]').addEventListener('click', ()=>{
+      if(place.mapLink && place.mapLink.trim()){
+        window.open(place.mapLink.trim(), '_blank', 'noopener');
+      } else {
+        openInMaps([place.name, place.location].filter(Boolean).join(' '));
+      }
+    });
+    card.querySelector('[data-action="remove"]').addEventListener('click', ()=>{
+      state.places.splice(idx,1); renderPlaces(); scheduleSave();
+    });
+
+    return card;
+  }
+
+  function renderPlaces(){
+    const grid = document.getElementById('placesGrid');
+    grid.innerHTML = '';
+    renderPlaceCategoryChips();
+    if(state.places.length===0){
+      grid.innerHTML = '<div class="empty">Места ещё не добавлены</div>';
+      return;
+    }
+
+    // A place can belong to several folders at once, so it can appear in
+    // more than one section. Places with no folder land in "Без категории".
+    const groups = state.placeCategories.map(c => ({ id: c.id, name: c.name, entries: [] }));
+    const noCatGroup = { id: null, name: 'Без категории', entries: [] };
+    state.places.forEach((place, idx)=>{
+      const ids = place.categoryIds || [];
+      if(ids.length === 0){
+        noCatGroup.entries.push({ place, idx });
+      } else {
+        ids.forEach(id=>{
+          const g = groups.find(g => g.id === id);
+          if(g) g.entries.push({ place, idx });
+        });
+      }
+    });
+    const allGroups = groups.concat(noCatGroup.entries.length ? [noCatGroup] : []);
+
+    if(allGroups.every(g => g.entries.length === 0)){
+      grid.innerHTML = '<div class="empty">Места ещё не добавлены</div>';
+      return;
+    }
+
+    allGroups.forEach(g=>{
+      if(!g.entries.length) return;
+      const section = document.createElement('div');
+      section.className = 'place-cat-group';
+      const heading = document.createElement('h3');
+      heading.textContent = g.name;
+      section.appendChild(heading);
+      const innerGrid = document.createElement('div');
+      innerGrid.className = 'places-grid';
+      section.appendChild(innerGrid);
+      g.entries.forEach(({place, idx}) => {
+        innerGrid.appendChild(buildPlaceCard(place, idx));
+      });
+      grid.appendChild(section);
+    });
+  }
+
+  /* ---------- helpers ---------- */
+  function escapeHtml(str){
+    return String(str==null?'':str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escapeAttr(str){ return escapeHtml(str); }
+
+  loadState();
+})();
+</script>
+</body>
+</html>
